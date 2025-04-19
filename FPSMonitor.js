@@ -2,6 +2,26 @@ import { OverlayCanvasFPSPlot } from "./OverlayCanvasFPSPlot.js"
 import { Smoother } from "./Smoother.js"
 
 
+
+const POSITION_KEY = 'fpsOverlayPosition';
+
+function savePosition(left, top) {
+    localStorage.setItem(POSITION_KEY, JSON.stringify({ left, top }));
+}
+
+function loadPosition() {
+    const raw = localStorage.getItem(POSITION_KEY);
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+}
+
+
+
+
 // === FPS Monitor Core ===
 class FPSMonitor {
     #frames = 0;
@@ -12,18 +32,38 @@ class FPSMonitor {
     #dropCallback = null;
     #plotter = null;
     #smoother = null;
+    #memSmoother = null;
     #threshold;
     #interval;
     #debug;
 
-    constructor({ threshold = 60, interval = 1000, debug = true, plotter = null, smoother = null } = {}) {
+    constructor({ threshold = 60, interval = 1000, debug = true, plotter = null, smoother = null, memSmoother = null } = {}) {
         this.#threshold = threshold;
         this.#interval = interval;
         this.#debug = debug;
         this.#plotter = plotter;
         this.#smoother = smoother;
+        this.#memSmoother = memSmoother;
+        this.load();
     }
 
+    load() {
+
+        const saved = loadPosition();
+        if (saved) {
+            this.#plotter.canvas.style.left = `${saved.left}px`;
+            this.#plotter.canvas.style.top = `${saved.top}px`;
+            this.#plotter.canvas.style.right = 'auto';
+            this.#plotter.canvas.style.bottom = 'auto';
+
+            lagSlider.style.left = `${saved.left}px`;
+            lagSlider.style.top = `${saved.top + 70}px`;
+            lagSlider.style.right = 'auto';
+            lagSlider.style.bottom = 'auto';
+        }
+
+
+    }
     start() {
         if (this.#rafId) return;
         this.#frames = 0;
@@ -67,11 +107,19 @@ class FPSMonitor {
     };
 
     #updateFPS = () => {
-        this.#fps = this.#frames;
-        this.#frames = 0;
 
+        this.#frames = 0;
+        this.#fps = this.#frames;
         const smoothed = this.#smoother?.update(this.#fps) ?? this.#fps;
-        this.#plotter?.push(this.#fps, smoothed);
+
+        let memoryMB = 0;
+        let smoothedMem = 0;
+        if (performance.memory?.usedJSHeapSize) {
+            memoryMB = performance.memory.usedJSHeapSize / 1048576;
+            smoothedMem = this.#memSmoother?.update(memoryMB) ?? memoryMB;
+        }
+
+        this.#plotter?.push(this.#fps, smoothedFPS, smoothedMem);
 
         if (this.#debug) {
             console.log(`[FPSMonitor] Raw: ${this.#fps.toFixed(1)} | Smoothed: ${smoothed.toFixed(1)}`);
@@ -104,8 +152,12 @@ document.body.appendChild(lagSlider);
 // === Init ===
 const plotter = new OverlayCanvasFPSPlot();
 const smoother = new Smoother(parseFloat(lagSlider.value));
-const fpsMonitor = new FPSMonitor({ plotter, smoother });
-
+const memSmoother = new Smoother(0.5);
+const fpsMonitor = new FPSMonitor({
+    plotter,
+    smoother: fpsSmoother,
+    memSmoother: memSmoother
+});
 fpsMonitor.onDrop(({ delta }) => {
     console.log(`!! Frame dropped: ${delta.toFixed(1)}ms`);
 });
@@ -151,32 +203,39 @@ let isDragging = false;
 let dragOffset = { x: 0, y: 0 };
 
 plotter.canvas.addEventListener('mousedown', (e) => {
-  if (isPinned) return;
-  isDragging = true;
-  const rect = plotter.canvas.getBoundingClientRect();
-  dragOffset.x = e.clientX - rect.left;
-  dragOffset.y = e.clientY - rect.top;
-  e.preventDefault();
+    if (isPinned) return;
+    isDragging = true;
+    const rect = plotter.canvas.getBoundingClientRect();
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+    e.preventDefault();
 });
 
 window.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  plotter.canvas.style.right = 'auto';
-  plotter.canvas.style.bottom = 'auto';
-  plotter.canvas.style.left = `${e.clientX - dragOffset.x}px`;
-  plotter.canvas.style.top = `${e.clientY - dragOffset.y}px`;
+    if (!isDragging) return;
+    plotter.canvas.style.right = 'auto';
+    plotter.canvas.style.bottom = 'auto';
+    plotter.canvas.style.left = `${e.clientX - dragOffset.x}px`;
+    plotter.canvas.style.top = `${e.clientY - dragOffset.y}px`;
 
-  lagSlider.style.right = 'auto';
-  lagSlider.style.bottom = 'auto';
-  lagSlider.style.left = `${e.clientX - dragOffset.x}px`;
-  lagSlider.style.top = `${e.clientY - dragOffset.y + 70}px`;
+    lagSlider.style.right = 'auto';
+    lagSlider.style.bottom = 'auto';
+    lagSlider.style.left = `${e.clientX - dragOffset.x}px`;
+    lagSlider.style.top = `${e.clientY - dragOffset.y + 70}px`;
+
+    savePosition(
+        e.clientX - dragOffset.x,
+        e.clientY - dragOffset.y
+    );
+
+
 });
 
 window.addEventListener('mouseup', () => {
-  isDragging = false;
+    isDragging = false;
 });
 
 plotter.canvas.addEventListener('dblclick', () => {
-  isPinned = !isPinned;
-  plotter.canvas.style.borderColor = isPinned ? '#f00' : '#888';
+    isPinned = !isPinned;
+    plotter.canvas.style.borderColor = isPinned ? '#f00' : '#888';
 });
