@@ -1,6 +1,7 @@
-class Smoother {
+// === Smoother ===
+export class Smoother {
     constructor(lagFactor = 0.5) {
-      this.weight = lagFactor; // new reading weight: 0.5 = 50%
+      this.weight = lagFactor;
       this.avg = null;
     }
   
@@ -21,4 +22,3 @@ class Smoother {
       this.weight = factor;
     }
   }
-  
