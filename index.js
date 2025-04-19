@@ -1,4 +1,6 @@
 
+
+import { savePosition, loadPosition, setOverlayPosition } from './utils.js';
 import { OverlayCanvasFPSPlot } from './overlayPlot.js';
 import { FPSMonitor } from './fpsMonitor.js';
 import { Smoother } from './smoother.js';
@@ -34,50 +36,52 @@ document.body.appendChild(slider);
 slider.addEventListener('input', () => fpsSmoother.setLagFactor(parseFloat(slider.value)));
 
 // Drag + Pin + Hotkey
-let isPinned = false, isDragging = false, dragOffset = { x: 0, y: 0 };
-plotter.canvas.addEventListener('mousedown', e => {
-  if (isPinned) return;
-  isDragging = true;
-  dragOffset.x = e.offsetX;
-  dragOffset.y = e.offsetY;
-});
-window.addEventListener('mousemove', e => {
-  if (!isDragging) return;
-  const x = e.clientX - dragOffset.x;
-  const y = e.clientY - dragOffset.y;
-  plotter.canvas.style.left = `${x}px`;
-  plotter.canvas.style.top = `${y}px`;
-  plotter.canvas.style.right = 'auto';
-  plotter.canvas.style.bottom = 'auto';
-  slider.style.left = `${x}px`;
-  slider.style.top = `${y + 90}px`;
-  slider.style.right = 'auto';
-  slider.style.bottom = 'auto';
-  localStorage.setItem('fpsOverlayPosition', JSON.stringify({ x, y }));
-});
-window.addEventListener('mouseup', () => isDragging = false);
-plotter.canvas.addEventListener('dblclick', () => {
-  isPinned = !isPinned;
-  plotter.canvas.style.borderColor = isPinned ? 'red' : '#888';
-});
-
-const saved = JSON.parse(localStorage.getItem('fpsOverlayPosition') || null);
-if (saved) {
-  plotter.canvas.style.left = `${saved.x}px`;
-  plotter.canvas.style.top = `${saved.y}px`;
-  plotter.canvas.style.right = 'auto';
-  plotter.canvas.style.bottom = 'auto';
-  slider.style.left = `${saved.x}px`;
-  slider.style.top = `${saved.y + 90}px`;
-  slider.style.right = 'auto';
-  slider.style.bottom = 'auto';
-}
-
-window.addEventListener('keydown', e => {
-  if (e.shiftKey && e.key === 'F') {
-    const visible = plotter.canvas.style.display !== 'none';
-    plotter.canvas.style.display = visible ? 'none' : 'block';
-    slider.style.display = visible ? 'none' : 'block';
-    visible ? monitor.stop() : monitor.start();
+function initDragAndPin(canvas, slider, monitor) {
+    let isPinned = false;
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+  
+    canvas.addEventListener('mousedown', e => {
+      if (isPinned) return;
+      isDragging = true;
+      dragOffset = { x: e.offsetX, y: e.offsetY };
+    });
+  
+    window.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      const x = e.clientX - dragOffset.x;
+      const y = e.clientY - dragOffset.y;
+      setOverlayPosition(canvas, x, y);
+      setOverlayPosition(slider, x, y + 90);
+      savePosition(x, y);
+    });
+  
+    window.addEventListener('mouseup', () => isDragging = false);
+  
+    canvas.addEventListener('dblclick', () => {
+      isPinned = !isPinned;
+      canvas.style.borderColor = isPinned ? 'red' : '#888';
+    });
+  
+    const saved = loadPosition();
+    if (saved) {
+      setOverlayPosition(canvas, saved.x, saved.y);
+      setOverlayPosition(slider, saved.x, saved.y + 90);
+    }
   }
-});
+
+
+function initToggleHotkey(canvas, slider, monitor, key = 'f') {
+    window.addEventListener('keydown', e => {
+      if (e.shiftKey && e.key.toLowerCase() === key) {
+        const visible = canvas.style.display !== 'none';
+        canvas.style.display = visible ? 'none' : 'block';
+        slider.style.display = visible ? 'none' : 'block';
+        visible ? monitor.stop() : monitor.start();
+      }
+    });
+  }
+  
+
+  initDragAndPin(canvas, slider, monitor);
+  initToggleHotkey(canvas, slider, monitor, key = 'f');
