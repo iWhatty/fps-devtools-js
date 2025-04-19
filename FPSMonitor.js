@@ -143,3 +143,40 @@ window.addEventListener('keydown', (e) => {
         toggleOverlay();
     }
 });
+
+
+// === Drag & Pin Logic ===
+let isPinned = false;
+let isDragging = false;
+let dragOffset = { x: 0, y: 0 };
+
+plotter.canvas.addEventListener('mousedown', (e) => {
+  if (isPinned) return;
+  isDragging = true;
+  const rect = plotter.canvas.getBoundingClientRect();
+  dragOffset.x = e.clientX - rect.left;
+  dragOffset.y = e.clientY - rect.top;
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  plotter.canvas.style.right = 'auto';
+  plotter.canvas.style.bottom = 'auto';
+  plotter.canvas.style.left = `${e.clientX - dragOffset.x}px`;
+  plotter.canvas.style.top = `${e.clientY - dragOffset.y}px`;
+
+  lagSlider.style.right = 'auto';
+  lagSlider.style.bottom = 'auto';
+  lagSlider.style.left = `${e.clientX - dragOffset.x}px`;
+  lagSlider.style.top = `${e.clientY - dragOffset.y + 70}px`;
+});
+
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+plotter.canvas.addEventListener('dblclick', () => {
+  isPinned = !isPinned;
+  plotter.canvas.style.borderColor = isPinned ? '#f00' : '#888';
+});
