@@ -1,0 +1,21 @@
+# Node dependencies
+node_modules/
+
+# esbuild output
+assets/monitor.bundle.js
+
+# Logs & lockfiles
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+
+# System junk
+.DS_Store
+Thumbs.db
+
+# VSCode settings (optional)
+.vscode/
+
+# Mac / Linux metadata
+*.swp

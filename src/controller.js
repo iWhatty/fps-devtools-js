@@ -1,6 +1,6 @@
-import { Smoother } from './Smoother.js';
-import { FPSMonitor } from './FPSMonitor.js';
-import { OverlayPlotRenderer } from './OverlayPlotRenderer.js';
+import { Smoother } from './smoother.js';
+import { FPSMonitor } from './fpsMonitor.js';
+import { OverlayPlotRenderer } from './overlayPlot.js';
 import { savePosition, loadPosition, setOverlayPosition } from './utils.js';
 
 export function createPerformanceHUD() {

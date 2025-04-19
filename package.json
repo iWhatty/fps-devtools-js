@@ -4,14 +4,14 @@
     "description": "Real-time FPS & Memory monitor for Chrome DevTools",
     "main": "src/index.js",
     "scripts": {
-      "build": "node esbuild.config.mjs",
-      "watch": "esbuild src/index.js --bundle --outfile=assets/monitor.bundle.js --format=iife --global-name=createPerformanceHUD --watch",
-      "clean": "rm -rf assets/monitor.bundle.js"
+        "build": "node esbuild.config.mjs",
+        "watch": "esbuild src/index.js --bundle --outfile=assets/monitor.bundle.js --format=iife --global-name=createPerformanceHUD --watch",
+        "clean": "rm -rf assets/monitor.bundle.js"
     },
-    "author": "Your Name",
+    "author": "DR.WATT",
     "license": "MIT",
     "devDependencies": {
-      "esbuild": "^0.20.0"
-    }
-  }
-  
+        "esbuild": "^0.20.2"
+    },
+    "keywords": []
+}
