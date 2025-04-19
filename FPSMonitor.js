@@ -1,15 +1,16 @@
 export class FPSMonitor {
-    constructor({ smoother, memSmoother, plotter, threshold = 60, interval = 1000 } = {}) {
-      this.smoother = smoother;
-      this.memSmoother = memSmoother;
-      this.plotter = plotter;
+    constructor({ threshold = 60, interval = 1000, historySize = 100, smoother, memSmoother, onUpdate }) {
       this.threshold = threshold;
       this.interval = interval;
+      this.historySize = historySize;
+      this.smoother = smoother;
+      this.memSmoother = memSmoother;
+      this.onUpdate = onUpdate;
+  
       this.frames = 0;
       this.frameCount = 0;
       this.stutterCount = 0;
       this.fpsHistory = [];
-      this.fpsHistorySize = 100;
     }
   
     start() {
@@ -36,28 +37,30 @@ export class FPSMonitor {
       this.frames = 0;
       this.frameCount++;
   
-      const smoothed = this.smoother.update(fps);
       if (fps < 20) this.stutterCount++;
   
       this.fpsHistory.push(fps);
-      if (this.fpsHistory.length > this.fpsHistorySize) this.fpsHistory.shift();
+      if (this.fpsHistory.length > this.historySize) this.fpsHistory.shift();
   
-      let onePct = 0;
-      if (this.fpsHistory.length >= 10) {
-        const sorted = [...this.fpsHistory].sort((a, b) => a - b);
-        const cutoff = Math.max(1, Math.floor(sorted.length * 0.01));
-        onePct = sorted.slice(0, cutoff).reduce((a, b) => a + b, 0) / cutoff;
-      }
+      const sorted = [...this.fpsHistory].sort((a, b) => a - b);
+      const cutoff = Math.max(1, Math.floor(sorted.length * 0.01));
+      const onePercentLow = sorted.slice(0, cutoff).reduce((a, b) => a + b, 0) / cutoff;
   
-      let memMB = 0;
-      if (performance.memory?.usedJSHeapSize) {
-        memMB = performance.memory.usedJSHeapSize / 1048576;
-      }
-  
-      const smoothedMem = this.memSmoother.update(memMB);
+      const smoothedFPS = this.smoother.update(fps);
+      const mem = performance.memory?.usedJSHeapSize / 1048576 || 0;
+      const smoothedMem = this.memSmoother.update(mem);
       const stutterRate = (this.stutterCount / this.frameCount) * 100;
   
-      this.plotter.push(fps, smoothed, onePct, stutterRate, smoothedMem);
+      if (typeof this.onUpdate === 'function') {
+        this.onUpdate({
+          raw: fps,
+          smoothed: smoothedFPS,
+          onePercentLow,
+          stutterRate,
+          memory: mem,
+          memoryAvg: smoothedMem,
+        });
+      }
     }
   }
   
