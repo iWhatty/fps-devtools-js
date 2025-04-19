@@ -1,3 +1,6 @@
+
+// controller.js
+
 import { Smoother } from './smoother.js';
 import { FPSMonitor } from './fpsMonitor.js';
 import { OverlayPlotRenderer } from './overlayPlot.js';
@@ -75,9 +78,9 @@ function initToggleHotkey(canvas, slider, monitor, key = 'f') {
     });
   }
   
-
-  initDragAndPin(canvas, slider, monitor);
-  initToggleHotkey(canvas, slider, monitor, key = 'f');
+  initDragAndPin(view.canvas, slider, monitor);
+  initToggleHotkey(view.canvas, slider, monitor, key = 'f');
+  
 
   monitor.start();
 
