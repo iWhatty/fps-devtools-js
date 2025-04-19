@@ -1,0 +1,6 @@
+FPSMonitor
+├── start()
+├── stop()
+├── getFPS()
+├── onDrop(callback)
+└── configure(options)
