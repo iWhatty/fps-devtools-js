@@ -1,0 +1,9 @@
+{
+    "name": "FPS & Memory Monitor",
+    "version": "1.0",
+    "description": "Track real-world FPS, 1% lows, stutters, and memory in DevTools",
+    "manifest_version": 3,
+    "devtools_page": "devtools.html",
+    "permissions": ["scripting", "storage"]
+  }
+  
