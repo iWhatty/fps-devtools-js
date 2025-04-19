@@ -1,6 +1,41 @@
-FPSMonitor
-├── start()
-├── stop()
-├── getFPS()
-├── onDrop(callback)
-└── configure(options)
+createPerformanceHUD()
+├── FPSMonitor (Model)
+│   ├── start()
+│   ├── stop()
+│   ├── updateFPS()
+│   └── Emits: {
+│         raw,
+│         smoothed,
+│         onePercentLow,
+│         stutterRate,
+│         memory,
+│         memoryAvg
+│       }
+│
+├── OverlayPlotRenderer (View)
+│   ├── render(snapshot)
+│   ├── plotLine(data, color, scale)
+│   └── destroy()
+│
+├── Smoother (Utility)
+│   ├── update(value)
+│   ├── smoothed
+│   ├── min / max
+│   └── setLagFactor(factor)
+│
+├── controller.js (Controller)
+│   ├── create HUD + slider
+│   ├── wire model → view
+│   ├── setup drag & pin logic
+│   ├── load/save position (via utils)
+│   └── handle Shift+F toggle
+│
+├── utils.js (Helper)
+│   ├── savePosition(x, y)
+│   ├── loadPosition()
+│   └── setOverlayPosition(elem, x, y)
+
+DevTools Integration
+├── manifest.json        ← defines the Chrome extension
+├── devtools.html/js     ← registers custom DevTools panel
+└── panel.html/js        ← loads & instantiates HUD inside panel
