@@ -1,3 +1,17 @@
-"scripts": {
-  "build": "node esbuild.config.mjs"
-}
+{
+    "name": "fps-monitor-devtools",
+    "version": "1.0.0",
+    "description": "Real-time FPS & Memory monitor for Chrome DevTools",
+    "main": "src/index.js",
+    "scripts": {
+      "build": "node esbuild.config.mjs",
+      "watch": "esbuild src/index.js --bundle --outfile=assets/monitor.bundle.js --format=iife --global-name=createPerformanceHUD --watch",
+      "clean": "rm -rf assets/monitor.bundle.js"
+    },
+    "author": "Your Name",
+    "license": "MIT",
+    "devDependencies": {
+      "esbuild": "^0.20.0"
+    }
+  }
+  
