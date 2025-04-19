@@ -1,48 +1,34 @@
 export class FPSMonitor {
     #frames = 0;
-    #lastFrameTime = performance.now();
     #fps = 0;
-    #running = false;
-    #callback = null;
+    #lastTick = 0;
+    #rafId = null;
+    #fpsIntervalId = null;
+    #dropCallback = null;
   
-    constructor({ threshold = 50, interval = 1000 } = {}) {
-      this.threshold = threshold;
-      this.interval = interval;
+    #threshold;
+    #interval;
+    #debug;
+  
+    constructor({ threshold = 50, interval = 1000, debug = false } = {}) {
+      this.#threshold = threshold;
+      this.#interval = interval;
+      this.#debug = debug;
     }
   
     start() {
-      if (this.#running) return;
-      this.#running = true;
+      if (this.#rafId) return;
       this.#frames = 0;
-      this.#lastFrameTime = performance.now();
-      this.#loop();
-      this.#tickFPS();
+      this.#lastTick = performance.now();
+      this.#rafId = requestAnimationFrame(this.#trackFrame);
+      this.#fpsIntervalId = setInterval(this.#updateFPS, this.#interval);
     }
   
     stop() {
-      this.#running = false;
-      cancelAnimationFrame(this.#raf);
-      clearInterval(this.#fpsInterval);
-    }
-  
-    #loop = () => {
-      this.#raf = requestAnimationFrame(() => {
-        this.#frames++;
-        const now = performance.now();
-        const delta = now - this.#lastFrameTime;
-        if (delta > this.threshold && this.#callback) {
-          this.#callback({ dropAt: now, delta });
-        }
-        this.#lastFrameTime = now;
-        if (this.#running) this.#loop();
-      });
-    };
-  
-    #tickFPS() {
-      this.#fpsInterval = setInterval(() => {
-        this.#fps = this.#frames;
-        this.#frames = 0;
-      }, this.interval);
+      cancelAnimationFrame(this.#rafId);
+      clearInterval(this.#fpsIntervalId);
+      this.#rafId = null;
+      this.#fpsIntervalId = null;
     }
   
     getFPS() {
@@ -50,12 +36,45 @@ export class FPSMonitor {
     }
   
     onDrop(callback) {
-      this.#callback = callback;
+      this.#dropCallback = callback;
     }
   
-    configure({ threshold, interval }) {
-      if (threshold != null) this.threshold = threshold;
-      if (interval != null) this.interval = interval;
+    configure({ threshold, interval, debug }) {
+      if (threshold != null) this.#threshold = threshold;
+      if (interval != null) {
+        this.#interval = interval;
+        if (this.#fpsIntervalId) {
+          clearInterval(this.#fpsIntervalId);
+          this.#fpsIntervalId = setInterval(this.#updateFPS, this.#interval);
+        }
+      }
+      if (debug != null) this.#debug = debug;
+    }
+  
+    #trackFrame = (timestamp) => {
+      if (!this.#rafId) return;
+  
+      const delta = timestamp - this.#lastTick;
+      if (delta > this.#threshold) this.#handleDrop(timestamp, delta);
+  
+      this.#frames++;
+      this.#lastTick = timestamp;
+      this.#rafId = requestAnimationFrame(this.#trackFrame);
+    };
+  
+    #updateFPS = () => {
+      this.#fps = this.#frames;
+      this.#frames = 0;
+      if (this.#debug) {
+        console.log(`[FPSMonitor] FPS: ${this.#fps}`);
+      }
+    };
+  
+    #handleDrop(timestamp, delta) {
+      if (this.#debug) {
+        console.warn(`[FPSMonitor] Frame drop detected: ${delta.toFixed(2)}ms at ${timestamp.toFixed(2)}ms`);
+      }
+      this.#dropCallback?.({ timestamp, delta });
     }
   }
   
