@@ -60,8 +60,14 @@ class OverlayCanvasFPSPlot {
       // Text
       ctx.fillStyle = '#fff';
       ctx.font = '10px monospace';
-      ctx.fillText(`Raw: ${this.latestRaw.toFixed(1)} FPS`, 4, 12);
-      ctx.fillText(`Smooth: ${this.latestSmoothed.toFixed(1)} FPS`, 4, 24);
+      
+      ctx.fillText(`FPS: ${this.latestRaw.toFixed(1)} | Avg: ${this.latestSmoothed.toFixed(1)}`, 4, 10);
+      ctx.fillText(`Min FPS: ${fpsSmoother.min.toFixed(1)} | Max: ${fpsSmoother.max.toFixed(1)}`, 4, 22);
+      
+      ctx.fillText(`Heap: ${this.latestMem.toFixed(1)} MB`, 4, 34);
+      ctx.fillText(`Min Heap: ${memSmoother.min.toFixed(1)} | Max: ${memSmoother.max.toFixed(1)}`, 4, 46);
+      ctx.fillText(`Avg Heap: ${memSmoother.smoothed.toFixed(1)} MB`, 4, 58);
+      
     }
   
     destroy() {
@@ -71,4 +77,3 @@ class OverlayCanvasFPSPlot {
 
 
 
-  
