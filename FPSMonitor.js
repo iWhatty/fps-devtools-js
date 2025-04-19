@@ -122,6 +122,8 @@ window.fpsMonitor = fpsMonitor;
 
 
 
+// === SHIFT+F TOGGLE ===
+
 let isVisible = true;
 
 function toggleOverlay() {
