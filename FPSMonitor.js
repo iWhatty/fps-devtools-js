@@ -37,6 +37,12 @@ class FPSMonitor {
     #interval;
     #debug;
 
+    #stutterCount = 0;
+    #frameCount = 0;
+    #fpsHistory = [];
+    #fpsHistorySize = 100;
+
+
     constructor({ threshold = 60, interval = 1000, debug = true, plotter = null, smoother = null, memSmoother = null } = {}) {
         this.#threshold = threshold;
         this.#interval = interval;
@@ -109,9 +115,16 @@ class FPSMonitor {
     #updateFPS = () => {
 
         this.#frames = 0;
+        this.#frameCount++;
         this.#fps = this.#frames;
-        const smoothed = this.#smoother?.update(this.#fps) ?? this.#fps;
 
+
+        // === Smooth FPS
+        const raw = this.#fps;
+        const smoothed = this.#smoother?.update(raw) ?? raw;
+
+
+        // === Memory Detection
         let memoryMB = 0;
         let smoothedMem = 0;
         if (performance.memory?.usedJSHeapSize) {
@@ -119,12 +132,41 @@ class FPSMonitor {
             smoothedMem = this.#memSmoother?.update(memoryMB) ?? memoryMB;
         }
 
-        this.#plotter?.push(this.#fps, smoothedFPS, smoothedMem);
+
+        // === Stutter Detection
+        if (raw < 20) this.#stutterCount++;
+
+        // === 1% Low Tracking
+        this.#fpsHistory.push(raw);
+        if (this.#fpsHistory.length > this.#fpsHistorySize) {
+            this.#fpsHistory.shift();
+        }
+
+        let onePercentLow = null;
+        if (this.#fpsHistory.length >= 10) {
+            const sorted = [...this.#fpsHistory].sort((a, b) => a - b);
+            const cutoff = Math.max(1, Math.floor(sorted.length * 0.01));
+            onePercentLow = sorted.slice(0, cutoff).reduce((a, b) => a + b, 0) / cutoff;
+        }
+
+
+
+
+
+        this.#plotter?.push(raw, smoothed, onePercentLow, this.#getStutterRate());
 
         if (this.#debug) {
             console.log(`[FPSMonitor] Raw: ${this.#fps.toFixed(1)} | Smoothed: ${smoothed.toFixed(1)}`);
         }
     };
+
+
+    #getStutterRate() {
+        if (this.#frameCount === 0) return 0;
+        return (this.#stutterCount / this.#frameCount) * 100;
+      }
+      
+
 
     #handleDrop(timestamp, delta) {
         if (this.#debug) {
