@@ -1,6 +1,7 @@
-import { Smoother } from './smoother.js';
+
 import { OverlayCanvasFPSPlot } from './overlayPlot.js';
 import { FPSMonitor } from './fpsMonitor.js';
+import { Smoother } from './smoother.js';
 
 const fpsSmoother = new Smoother(0.5);
 const memSmoother = new Smoother(0.5);
