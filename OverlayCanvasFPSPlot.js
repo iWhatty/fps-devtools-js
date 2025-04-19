@@ -68,3 +68,7 @@ class OverlayCanvasFPSPlot {
       this.canvas.remove();
     }
   }
+
+
+
+  
